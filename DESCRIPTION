@@ -1,0 +1,24 @@
+Package: exercise.gene.analysis
+Title: Analysis of Exercise-Responsive Genes (GSE47881)
+Version: 0.1.0
+Authors@R: person("Peter Yds", "yu-hsin.yeh27@ncf.edu", role = c("aut", "cre"))
+Description: Analyzes skeletal muscle gene expression pre- and post-exercise
+    using GEO dataset GSE47881. Includes differential expression analysis
+    with limma, PCA, heatmap visualization, and GO enrichment.
+License: MIT
+Encoding: UTF-8
+Depends:
+    R (>= 4.1.0)
+Imports:
+    GEOquery,
+    limma,
+    pheatmap,
+    clusterProfiler,
+    org.Hs.eg.db,
+    hgu133plus2.db,
+    dplyr,
+    ggplot2,
+    stats,
+    utils,
+    Biobase
+Remotes:
