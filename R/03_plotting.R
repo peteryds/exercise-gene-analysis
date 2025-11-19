@@ -89,3 +89,60 @@ plot_go_barplot <- function(ego, n_categories = 10, title = "GO Biological Proce
   
   return(p)
 }
+
+#' @title Plot Violin Plot for DEGs
+#' @description Creates a faceted violin plot showing expression distributions 
+#'              for the top differentially expressed genes.
+#' @param expr_subset Expression matrix (genes × samples), usually top N DEGs.
+#' @param group_factor Factor vector indicating sample condition (e.g., pre/post).
+#' @param title Title for the plot.
+#' @return A ggplot object with faceted violin plots.
+#' @import ggplot2
+#' @import tidyr
+#' @import dplyr
+#' @export
+plot_violin_degs <- function(expr_subset, group_factor, title = "Violin Plot of Top DEGs") {
+  
+  # Convert expression matrix to long tidy format
+  df <- expr_subset %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column("Gene") %>%
+    pivot_longer(
+      cols = -Gene,
+      names_to = "Sample",
+      values_to = "Expression"
+    )
+  
+
+  # Match condition for each sample
+  df$Condition <- group_factor[df$Sample]
+  df$Condition <- factor(df$Condition,
+                         levels = c("pre-training", "post-training"))
+ 
+  
+  # Violin plot with jitter & facet per gene
+  p <- ggplot(df, aes(x = Condition, y = Expression, fill = Condition)) +
+    geom_violin(trim = FALSE, scale = "width", alpha = 0.7) +
+    geom_jitter(width = 0.15, size = 0.8, alpha = 0.6) +
+    scale_fill_manual(values = c(
+      "pre-training" = "#1f78b4",
+      "post-training" = "#e31a1c"
+    )) +
+    labs(
+      title = title,
+      x = "Condition",
+      y = "Normalized Expression"
+    ) +
+    theme_minimal() +
+    theme(
+      strip.text.x = element_text(size = 7, face = "bold"),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      legend.position = "bottom"
+    ) +
+    facet_wrap(~ Gene, scales = "free_y", ncol = 10)
+  
+  return(p)
+}
+
+
