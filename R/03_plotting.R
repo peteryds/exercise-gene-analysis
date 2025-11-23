@@ -129,7 +129,7 @@ plot_violin_degs <- function(expr_subset, group_factor, title = "Violin Plot of 
   }
   df$Condition <- group_factor[df$Sample]
   df$Condition <- factor(df$Condition,
-                         levels = c("pre-training", "post-training"))
+                         levels = levels(group_factor))
  
   
   # Violin plot with jitter & facet per gene
