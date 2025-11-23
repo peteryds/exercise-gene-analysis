@@ -136,10 +136,8 @@ plot_violin_degs <- function(expr_subset, group_factor, title = "Violin Plot of 
   p <- ggplot(df, aes(x = Condition, y = Expression, fill = Condition)) +
     geom_violin(trim = FALSE, scale = "width", alpha = 0.7) +
     geom_jitter(width = 0.15, size = 0.8, alpha = 0.6) +
-    scale_fill_manual(values = c(
-      "pre-training" = "#1f78b4",
-      "post-training" = "#e31a1c"
-    )) +
+    # Use default ggplot2 color palette for fill
+    # scale_fill_manual removed for flexibility
     labs(
       title = title,
       x = "Condition",
