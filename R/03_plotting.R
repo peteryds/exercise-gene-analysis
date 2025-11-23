@@ -115,6 +115,18 @@ plot_violin_degs <- function(expr_subset, group_factor, title = "Violin Plot of 
   
 
   # Match condition for each sample
+  if (is.null(names(group_factor))) {
+    stop("group_factor must be a named vector with sample IDs as names")
+  }
+  missing_samples <- setdiff(df$Sample, names(group_factor))
+  if (length(missing_samples) > 0) {
+    stop(
+      paste0(
+        "Some samples in expr_subset do not have corresponding entries in group_factor: ",
+        paste(missing_samples, collapse = ", ")
+      )
+    )
+  }
   df$Condition <- group_factor[df$Sample]
   df$Condition <- factor(df$Condition,
                          levels = c("pre-training", "post-training"))
