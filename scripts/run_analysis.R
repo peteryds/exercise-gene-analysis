@@ -107,9 +107,20 @@ if (nrow(sig_genes) >= 2) {
 if (nrow(sig_genes) >= 2) 
   {
   top_probes <- head(rownames(sig_genes), TOP_N_GENES)
-  p_violin <- plot_violin_degs( expr_matrix[top_probes, ], group_factor,
-    title = sprintf("Expression Distribution (Top %d DEGs)", min(TOP_N_GENES, nrow(sig_genes))))
-  ggsave("results/plots/violin_top_degs.png",p_violin,width = 10,height = 8)
+  p_violin <- plot_violin_degs(
+    expr_matrix[top_probes, ],
+    group_factor,
+    title = sprintf(
+      "Expression Distribution (Top %d DEGs)",
+      min(TOP_N_GENES, nrow(sig_genes))
+    )
+  )
+  ggsave(
+    "results/plots/violin_top_degs.png",
+    p_violin,
+    width = 10,
+    height = 8
+  )
   
 } else {
   message("Not enough DEGs for violin plot.")
