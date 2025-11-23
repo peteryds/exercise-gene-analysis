@@ -26,9 +26,11 @@ load_and_prep_gse <- function(gse_id = "GSE47881") {
   if (!"time:ch1" %in% colnames(pdata)) {
     stop("Column 'time:ch1' not found in pData.")
   }
-  
   group <- factor(pdata$`time:ch1`,
                   levels = c("pre-training", "post-training"))
+  
+  # Attach sample names (GSM IDs)
+  names(group) <- rownames(pdata)
   
   if (any(is.na(group))) {
     warning("NA values present in grouping variable.")
