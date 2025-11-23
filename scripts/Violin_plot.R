@@ -61,7 +61,7 @@ if (nrow(sig_genes) >= 2)
   ggsave("results/plots/violin_top_degs.png",p_violin,width = 10,height = 8)
   
 } else {
-  message(" Not enough DEGs for violin plot.")
+  message("Not enough DEGs for violin plot.")
 }
 
 # PCA – all genes
