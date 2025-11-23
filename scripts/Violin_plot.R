@@ -96,5 +96,5 @@ if (nrow(sig_genes) >= 2) {
   }
 }
 
-message(" Analysis complete! Results saved in 'results/'.")
+message("Analysis complete! Results saved in 'results/'.")
 
