@@ -48,8 +48,11 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-.DS_Store
+# Data
+data/
 
 # Result
-results/
+output/
 
+# MacOS system file
+.DS_Store
