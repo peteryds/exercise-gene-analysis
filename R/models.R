@@ -164,6 +164,10 @@ run_limma_interaction <- function(eset, p_cutoff = 0.05) {
   col_subj <- grep("patient|subject", colnames(pdata), value = TRUE, ignore.case = TRUE)[1]
   col_age  <- grep("age", colnames(pdata), value = TRUE, ignore.case = TRUE)[1]
   
+  # Validation for required columns
+  if (is.na(col_time)) stop("Error: Time column not found.")
+  if (is.na(col_age)) stop("Error: Age column not found.")
+  
   # --- 2. Check for Unpaired Samples ---
   subject_counts <- table(pdata[[col_subj]])
   orphans <- names(subject_counts[subject_counts != 2])
