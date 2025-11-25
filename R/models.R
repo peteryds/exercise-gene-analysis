@@ -164,18 +164,17 @@ run_limma_interaction <- function(eset, p_cutoff = 0.05) {
   col_subj <- grep("patient|subject", colnames(pdata), value = TRUE, ignore.case = TRUE)[1]
   col_age  <- grep("age", colnames(pdata), value = TRUE, ignore.case = TRUE)[1]
   
-  # --- 2. Remove Unpaired Samples (Crucial) ---
+  # --- 2. Check for Unpaired Samples ---
   subject_counts <- table(pdata[[col_subj]])
-  valid_subjects <- names(subject_counts[subject_counts == 2])
   orphans <- names(subject_counts[subject_counts != 2])
   
   if (length(orphans) > 0) {
-    message(paste("Removing", length(orphans), "unpaired subject(s):", paste(orphans, collapse=", ")))
+    stop(paste("Error: Unpaired subjects detected (should have been removed upstream):", paste(orphans, collapse=", ")))
   }
   
-  keep_indices <- pdata[[col_subj]] %in% valid_subjects
-  eset_clean <- eset[, keep_indices]
-  pdata_clean <- pData(eset_clean)
+  # All subjects are paired; proceed
+  pdata_clean <- pdata
+  eset_clean <- eset
   
   # --- 3. Prepare Variables ---
   subjects <- factor(pdata_clean[[col_subj]])
