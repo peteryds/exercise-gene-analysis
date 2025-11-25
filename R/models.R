@@ -212,16 +212,18 @@ run_limma_interaction <- function(eset, p_cutoff = 0.05) {
   
   # Rename the interaction column to something readable
   # usually it gets named "age_interaction_term"
+  # First, make all column names safe
+  colnames(design) <- make.names(colnames(design))
+  # Then, explicitly set the last column name to "Interaction_Age"
   colnames(design)[ncol(design)] <- "Interaction_Age"
-  colnames(design) <- make.names(colnames(design)) # Safe names
   
   # --- 6. Run Limma ---
   fit <- lmFit(exprs(eset_clean), design)
   fit <- eBayes(fit)
   
   # --- 7. Extract Results ---
-  # Now we just look for our specific column "Interaction_Age"
-  coef_name <- "Interaction_Age"
+  # Use the actual name of the last column for the coefficient
+  coef_name <- colnames(design)[ncol(design)]
   
   if (!coef_name %in% colnames(design)) {
     # Fallback search if renaming failed
