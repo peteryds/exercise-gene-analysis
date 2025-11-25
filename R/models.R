@@ -192,6 +192,9 @@ run_limma_interaction <- function(eset, p_cutoff = 0.05) {
   
   # Age: Clean & Center
   age_numeric <- as.numeric(gsub("[^0-9.]", "", pdata_clean[[col_age]]))
+  if (any(is.na(age_numeric))) {
+    stop("Error: Missing or invalid age values detected in the data.")
+  }
   age_centered <- age_numeric - mean(age_numeric)
   
   # --- 4. Manual Interaction Term (THE FIX) ---
