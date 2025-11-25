@@ -94,6 +94,9 @@ process_gene_data <- function(eset) {
 clean_and_normalize_data <- function(eset, outliers_to_remove = NULL) {
   message("Starting Data Cleaning & Normalization...")
   
+  # Store original sample count before any modifications
+  original_sample_count <- ncol(eset)
+  
   # --- 1. Log2 Transformation Check ---
   # Check max value. If > 100, it's likely raw intensity (linear scale).
   ex <- exprs(eset)
@@ -141,7 +144,7 @@ clean_and_normalize_data <- function(eset, outliers_to_remove = NULL) {
   eset_clean <- eset[, keep_indices]
   
   message(paste("[DONE] Cleaning Complete."))
-  message(paste("Original Samples:", ncol(ex), "-> Final Samples:", ncol(eset_clean)))
+  message(paste("Original Samples:", original_sample_count, "-> Final Samples:", ncol(eset_clean)))
   
   return(eset_clean)
 }

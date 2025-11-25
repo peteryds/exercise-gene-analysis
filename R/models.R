@@ -185,7 +185,7 @@ run_limma_interaction <- function(eset, p_cutoff = 0.05) {
   
   # Timepoints: Ensure Pre is Reference (0)
   timepoints <- factor(pdata_clean[[col_time]])
-  ref_level <- grep("pre|base|0", levels(timepoints), value = TRUE, ignore.case = TRUE)[1]
+  ref_level <- grep("^(pre|baseline)", levels(timepoints), value = TRUE, ignore.case = TRUE)[1]
   if (!is.na(ref_level)) {
     timepoints <- relevel(timepoints, ref = ref_level)
   }

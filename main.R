@@ -137,6 +137,13 @@ if (length(top_genes) == 0) {
 
 message(paste("Generating plots for", length(top_genes), "interaction candidates..."))
 
+# Validate that genes exist in the visualization dataframe before plotting
+available_genes <- gsub("_diff$", "", colnames(final_df_viz)[grepl("_diff$", colnames(final_df_viz))])
+top_genes <- intersect(top_genes, available_genes)
+if (length(top_genes) == 0) {
+  warning("No genes from interaction analysis found in visualization data frame.")
+}
+
 for (gene in top_genes) {
   # A. Scatter Plot (Age vs Change) - Proves the Interaction
   p_scatter <- plot_gene_age_scatter(final_df_viz, gene)
