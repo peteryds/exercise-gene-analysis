@@ -240,7 +240,6 @@ run_limma_interaction <- function(eset, p_cutoff = 0.05) {
   
   return(list(
     full_results = full_results,
-    sig_genes_df = sig_genes,
-    clean_eset = eset_clean
+    sig_genes_df = sig_genes
   ))
 }
