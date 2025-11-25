@@ -144,3 +144,98 @@ run_limma_screening <- function(eset, p_cutoff = 0.05, lfc_cutoff = 0) {
     sig_probes = rownames(sig_results)
   ))
 }
+
+#' Run Limma Interaction Analysis (Timepoint x Age)
+#'
+#' Fixes "Coefficients not estimable" by manually creating the interaction term.
+#' Model: ~ Subject + Timepoint + (Age * IsPost)
+#' This tests if the *Change* (Post - Pre) is associated with Age.
+#'
+#' @param eset ExpressionSet object.
+#' @param p_cutoff FDR cutoff.
+#' @return List of results.
+run_limma_interaction <- function(eset, p_cutoff = 0.05) {
+  message("Running Limma Interaction Model (Timepoint * Age)...")
+  
+  pdata <- pData(eset)
+  
+  # --- 1. Column Detection ---
+  col_time <- grep("time", colnames(pdata), value = TRUE, ignore.case = TRUE)[1]
+  col_subj <- grep("patient|subject", colnames(pdata), value = TRUE, ignore.case = TRUE)[1]
+  col_age  <- grep("age", colnames(pdata), value = TRUE, ignore.case = TRUE)[1]
+  
+  # --- 2. Remove Unpaired Samples (Crucial) ---
+  subject_counts <- table(pdata[[col_subj]])
+  valid_subjects <- names(subject_counts[subject_counts == 2])
+  orphans <- names(subject_counts[subject_counts != 2])
+  
+  if (length(orphans) > 0) {
+    message(paste("Removing", length(orphans), "unpaired subject(s):", paste(orphans, collapse=", ")))
+  }
+  
+  keep_indices <- pdata[[col_subj]] %in% valid_subjects
+  eset_clean <- eset[, keep_indices]
+  pdata_clean <- pData(eset_clean)
+  
+  # --- 3. Prepare Variables ---
+  subjects <- factor(pdata_clean[[col_subj]])
+  
+  # Timepoints: Ensure Pre is Reference (0)
+  timepoints <- factor(pdata_clean[[col_time]])
+  ref_level <- grep("pre|base|0", levels(timepoints), value = TRUE, ignore.case = TRUE)[1]
+  if (!is.na(ref_level)) {
+    timepoints <- relevel(timepoints, ref = ref_level)
+  }
+  
+  # Age: Clean & Center
+  age_numeric <- as.numeric(gsub("[^0-9.]", "", pdata_clean[[col_age]]))
+  age_centered <- age_numeric - mean(age_numeric)
+  
+  # --- 4. Manual Interaction Term (THE FIX) ---
+  # We create a numeric vector that is:
+  # - 0 for Pre-training samples
+  # - Age_Centered for Post-training samples
+  # This avoids collinearity with Subjects.
+  
+  # Create numeric 0/1 for Time (0=Ref/Pre, 1=Treat/Post)
+  is_post <- as.numeric(timepoints) - 1 
+  
+  # Interaction Vector
+  age_interaction_term <- is_post * age_centered
+  
+  # --- 5. Design Matrix ---
+  # Formula: ~ Subject + Time + Manual_Interaction
+  design <- model.matrix(~ subjects + timepoints + age_interaction_term)
+  
+  # Rename the interaction column to something readable
+  # usually it gets named "age_interaction_term"
+  colnames(design)[ncol(design)] <- "Interaction_Age"
+  colnames(design) <- make.names(colnames(design)) # Safe names
+  
+  # --- 6. Run Limma ---
+  fit <- lmFit(exprs(eset_clean), design)
+  fit <- eBayes(fit)
+  
+  # --- 7. Extract Results ---
+  # Now we just look for our specific column "Interaction_Age"
+  coef_name <- "Interaction_Age"
+  
+  if (!coef_name %in% colnames(design)) {
+    # Fallback search if renaming failed
+    coef_name <- grep("age", colnames(design), value = TRUE, ignore.case = TRUE)
+    coef_name <- tail(coef_name, 1) # usually the last one
+  }
+  
+  message(paste("Targeting Coefficient:", coef_name))
+  
+  full_results <- topTable(fit, coef = coef_name, number = Inf, adjust.method = "BH")
+  sig_genes <- full_results %>% filter(adj.P.Val < p_cutoff)
+  
+  message(paste("Analysis Complete. Significant Interaction Genes:", nrow(sig_genes)))
+  
+  return(list(
+    full_results = full_results,
+    sig_genes_df = sig_genes,
+    clean_eset = eset_clean
+  ))
+}
