@@ -138,25 +138,27 @@ if (length(top_genes) == 0) {
 message(paste("Generating plots for", length(top_genes), "interaction candidates..."))
 
 # Validate that genes exist in the visualization dataframe before plotting
-available_genes <- gsub("_diff$", "", colnames(final_df_viz)[grepl("_diff$", colnames(final_df_viz))])
+diff_cols <- colnames(final_df_viz)[grepl("_diff$", colnames(final_df_viz))]
+available_genes <- gsub("_diff$", "", diff_cols)
 top_genes <- intersect(top_genes, available_genes)
+
 if (length(top_genes) == 0) {
   warning("No genes from interaction analysis found in visualization data frame.")
-}
-
-for (gene in top_genes) {
-  # A. Scatter Plot (Age vs Change) - Proves the Interaction
-  p_scatter <- plot_gene_age_scatter(final_df_viz, gene)
-  if (!is.null(p_scatter)) {
-    # Add subtitle to indicate this was found via Limma
-    p_scatter <- p_scatter + labs(subtitle = "Selected via Limma Interaction (Age * Time)")
-    ggsave(file.path(dir_plots, paste0("Scatter_", gene, ".png")), p_scatter, width = 5, height = 4)
-  }
-  
-  # B. Violin Plot (Pre vs Post) - Shows the raw change
-  p_violin <- plot_gene_violin(eset_clean, gene)
-  if (!is.null(p_violin)) {
-    ggsave(file.path(dir_plots, paste0("Violin_", gene, ".png")), p_violin, width = 5, height = 4)
+} else {
+  for (gene in top_genes) {
+    # A. Scatter Plot (Age vs Change) - Proves the Interaction
+    p_scatter <- plot_gene_age_scatter(final_df_viz, gene)
+    if (!is.null(p_scatter)) {
+      # Add subtitle to indicate this was found via Limma
+      p_scatter <- p_scatter + labs(subtitle = "Selected via Limma Interaction (Age * Time)")
+      ggsave(file.path(dir_plots, paste0("Scatter_", gene, ".png")), p_scatter, width = 5, height = 4)
+    }
+    
+    # B. Violin Plot (Pre vs Post) - Shows the raw change
+    p_violin <- plot_gene_violin(eset_clean, gene)
+    if (!is.null(p_violin)) {
+      ggsave(file.path(dir_plots, paste0("Violin_", gene, ".png")), p_violin, width = 5, height = 4)
+    }
   }
 }
 
