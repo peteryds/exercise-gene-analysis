@@ -148,7 +148,7 @@ run_limma_screening <- function(eset, p_cutoff = 0.05, lfc_cutoff = 0) {
 #' Run Limma Interaction Analysis (Timepoint x Age)
 #'
 #' Fixes "Coefficients not estimable" by manually creating the interaction term.
-#' Model: ~ Subject + Timepoint + (Age * IsPost)
+#' Model: ~ subjects + timepoints + age_interaction_term (where age_interaction_term = is_post * age_centered)
 #' This tests if the *Change* (Post - Pre) is associated with Age.
 #'
 #' @param eset ExpressionSet object.
