@@ -1,0 +1,153 @@
+---
+title: "Exercise-gene-analysis"
+author: "Peter, Matt, Maria"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    theme: united
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 10, fig.height = 7)
+# =============================================================
+# Project: Exercise-Responsive Gene Analysis (GSE47881)
+# Report
+# =============================================================
+
+# 1. Load Environment & Functions
+source("R/load_packages.R")
+source("R/load_data.R")
+source("R/munging.R")  # Must contain: process_gene_data, clean_and_normalize_data
+source("R/models.R")   # Must contain: run_limma_screening, run_limma_interaction
+source("R/eda.R")      # Must contain: plotting functions
+source("main.R")     # Must contain the pipeline
+
+# Load required packages
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(tibble)
+library(GEOquery)
+library(limma)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(hgu133plus2.db)
+library(reshape2)
+library(Biobase)
+
+```
+
+## Introduction
+Exercise-Responsive Gene Analysis (GSE47881)
+
+Skeletal muscle is one of the most adaptable tissues in the human body, capable of undergoing rapid structural and metabolic changes in response to exercise. These adaptations are driven by coordinated transcriptional programs that regulate muscle remodeling, hypertrophy, regeneration, and metabolic efficiency. Understanding how resistance training reshapes gene expression in human muscle is essential for uncovering the molecular mechanisms underlying strength gains and individual variability in training responsiveness.
+
+In this project, we analyze the publicly available gene expression dataset GSE47881, which profiles human skeletal muscle before and after 20 weeks of supervised resistance training. All samples were obtained through percutaneous muscle biopsies of the vastus lateralis, a major muscle of the quadriceps group located in the lateral thigh. The vastus lateralis is the most commonly sampled muscle in exercise physiology research because it is large, accessible, safe to biopsy, and displays robust molecular adaptations to both resistance and endurance training. As such, it provides a reliable window into the transcriptional responses of human skeletal muscle to exercise.
+
+This dataset includes paired samples from 45 adults showing a wide spectrum of hypertrophic outcomes, making it a valuable model for studying both group-level molecular responses and inter-individual variability.
+
+Our project integrates several analytical components explained below:
+
+1. Differential Expression Analysis (Limma), the Limma  framework, fits a linear model for every gene, borrowing information across all genes to stabilize variance (empirical Bayes)
+and correcting for multiple testing (FDR)
+
+We ran two different Limma-based models, the first one identifies genes whose expression significantly changes after resistance training. This analysis is the main effect worked with the pre  and post training gene expressions (Paired Design).
+
+A second interaction model evaluates whether age modifies the magnitude of gene expression responses (Age × Timepoint). Identifies genes whose response to training depends on age, meaning some genes change more in younger or older participants.
+
+2. Quality Control & Visualization
+
+PCA, sample heatmaps, and density plots are used to assess data quality before and after cleaning.
+Additionally, volcano plots, scatterplots, and violin plots visualize gene-level expression changes and evidence of age-related interactions.
+With this part we detected outliers, non-log distributions and we did a Log2 normalization check that allowed us to get differential expression visualization
+
+3. Gene-specific inspection of top results
+For the most significant genes identified by Limma, we generate gene-level plots—both expression (violin) and delta-change vs. age (scatter)—to highlight potential molecular drivers of exercise adaptation.
+
+Through these analyses, we aim to characterize how skeletal muscle transcriptional programs are altered by resistance training, identify gene networks involved in adaptation, and explore how individual factors such as age may influence the magnitude of transcriptional response.
+
+## How we did our data analysis ?##
+
+To prepare the data for statistical modeling, we performed the following preprocessing
+steps:
+a. Removed the participant who did not complete the training 
+b. Computed the expression difference (Post – Pre) for every gene in every participant,
+representing the individual’s molecular response to training.
+c. Transposed the expression matrix so that each row corresponds to one participant
+and each column represents one gene.
+
+
+### Visual Analysis ###
+
+Before cleaning our data, PCA and distance heatmaps showed clear technical issues—one extreme outlier, uneven sample scaling, and wide variation in distances. Samples clustered tightly near zero on PC1, suggesting library size or normalization problems.
+Pre- and post-training groups showed no separation, but interpretation was unreliable due to noise.
+After cleaning and log normalization, these artifacts disappeared. Variance stabilized, outliers were removed, and sample distances became uniform. Clustering and PCA looked smoother and biologically plausible. Pre- and post-training samples still overlapped completely, indicating no major global transcriptomic shift.
+Therefore, QC and normalization greatly improved data quality and interpretability, but did not reveal meaningful pre/post differences—any effects are likely subtle and require targeted statistical testing.
+
+
+```{r plot-pca}
+p_pca_raw 
+p_pca_clean
+
+plot_sample_heatmap(eset_raw)
+plot_sample_heatmap(eset_clean)
+
+```
+
+# PCA raw and PCA density ##
+
+In the raw data, expression densities were extremely skewed, with values piled near zero and a long right tail driven by outliers and uneven library sizes. This made sample distributions incomparable and signaled strong technical effects. Pre- and post-training curves were visually indistinguishable but not interpretable due to scale distortion.
+After cleaning and log₂ normalization, expression profiles became smooth, unimodal, and tightly aligned across samples. Distributions now fall within a biologically reasonable range, indicating successful variance stabilization and normalization. Pre- and post-training curves still largely overlap, suggesting no major global shift in expression levels.
+So that's why, cleaning corrected severe distortion in expression distributions and made samples comparable, but did not reveal systematic differences between timepoints.
+
+
+```{r plot-density}
+   p_dens_raw
+   p_dens_clean
+```
+
+### Volcano ##
+
+The volcano plot shows a modest but measurable transcriptional response to resistance training. A small set of genes pass the adjusted significance threshold—more are upregulated post-training (red) than downregulated (blue), indicating a directional shift rather than random fluctuation. Fold changes are generally mild (mostly within ±1 log₂ unit), consistent with subtle biological effects rather than large systemic rewiring. Most genes remain nonsignificant (gray), reflecting stable overall expression profiles.
+Conclusion: Resistance training produces targeted, statistically significant gene-level changes, but the effect is selective and moderate rather than global.
+
+
+```{r plot-volcano}
+ volcano_plot
+```
+
+## Gene Expression Before vs After Exercise: Within-Subject Changes ##
+
+This figure compares Pre and Post expression levels for the top interaction genes. Each violin shows the distribution of values at each timepoint, with boxplots representing the median and interquartile range. Thin gray lines link each participant’s Pre and Post values, highlighting within-subject changes.
+
+Across many genes, the medians shift between timepoints and the paired lines show individual differences in response. Overall, these plots confirm that the selected genes are exercise-responsive, showing clear and measurable Pre–Post expression change.
+
+
+
+```{r plot-facetviolin}
+  p_facet_violin
+```
+
+## Interaction Effect: How Age Modifies Gene Expression Response to Exercise ##
+This figure quantifies how age shapes the magnitude of each participant’s transcriptional response to training, plotting age on the x-axis and the expression change (Post – Pre) on the y-axis. Each facet corresponds to a single gene, with points representing individuals and dashed regression lines summarizing the overall trend with 95% confidence intervals.
+
+Clear gene-specific interaction patterns emerge. Several genes (e.g., 205890_s_at, 217984_at, 228245_s_at) show larger positive responses in younger participants, with diminishing or negative changes as age increases. This suggests that these transcripts are more inducible in younger muscle, aligning with known age-related declines in anabolic signaling and regenerative capacity.
+
+Conversely, other genes (e.g., 210019_at, 214256_at, 220830_at) display the opposite pattern, with stronger upregulation in older individuals. These genes may represent compensatory, inflammatory, or stress-responsive pathways that are more engaged in older muscle tissue.
+
+Because each gene exhibits a distinct slope, these results demonstrate that the transcriptomic response to resistance training is not uniform across age groups. Instead, age acts as a significant biological modifier of exercise-induced gene expression, consistent with the significant Age × Time interaction revealed by the Limma model.
+
+Together, these interaction plots provide strong visual confirmation that age influences the direction and magnitude of molecular adaptation in skeletal muscle, highlighting the complexity of exercise responsiveness across the lifespan.
+
+```{r plot-facetscatter}
+ p_facet_scatter 
+```
+
+
+## Conclusion ##
+
+Resistance training induces measurable but moderate gene expression changes in human skeletal muscle. Through rigorous quality control, paired statistical modeling, and gene-level visualizations, we identified a set of exercise-responsive transcripts and demonstrated that age substantially modifies these responses. Younger and older individuals engage different molecular programs when adapting to exercise, reflecting the dynamic interplay between training stimuli and biological aging. These findings underscore the importance of individualized approaches in exercise physiology and highlight key molecular pathways that may mediate differences in muscular adaptation across the lifespan.
+
